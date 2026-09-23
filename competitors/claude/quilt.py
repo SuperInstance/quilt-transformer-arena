@@ -461,44 +461,54 @@ class Engine:
         }
 
     # ---- tick phase 1: FORWARD (canvas exact linear; worker transcendental) --
+    # Two canvas<->worker round-trips, because the output layer's exact linear
+    # part needs the hidden ACTIVATION, which only the worker can produce:
+    #   canvas: zh (exact)  ->  worker: a = sigmoid(zh)  ->
+    #   canvas: zy (exact)  ->  worker: y = sigmoid(zy)
     def forward(self, cv: Canvas, cycle: int, w: NumpyWorker) -> tuple[dict, dict]:
         cv.set_tick(3 * cycle + 1)
-        # canvas-native: read params (REGISTRAR), publish only the arguments
         reads = ([f"B.b[{j}]" for j in HID] + [f"W.w{k}[{j}]" for j in HID
                  for k in (0, 1)] + [f"W2.v[{j}]" for j in HID] + ["B2.c"] +
                  [f"T.x{c}.{k}" for c in CASES for k in (0, 1)])
         in_pins = pin(cv, reads)
-        zh, zy = [], []
+
+        # 1a. canvas-native hidden pre-activation: Q32 accumulate, ONE shift
+        zh = []
         for c in CASES:
             x0 = cv.read("REGISTRAR", "T", f"x{c}.0")
             x1 = cv.read("REGISTRAR", "T", f"x{c}.1")
             zh_c = []
             for j in HID:
-                # Q32 accumulation, ONE shift: 1 rounding per neuron per case
                 acc = cv.read("REGISTRAR", "B", f"b[{j}]") * SCALE
                 acc += cv.read("REGISTRAR", "W", f"w0[{j}]") * x0
                 acc += cv.read("REGISTRAR", "W", f"w1[{j}]") * x1
                 zh_c.append(acc >> 16)
+                cv.write("REGISTRAR", "Z", f"zh{c}[{j}]", zh_c[-1], "arg",
+                         SIGMA_Q16_SHIFT)
             zh.append(zh_c)
+        # 1b. worker: sigmoid of the published arguments only
+        for c in CASES:
+            for j in HID:
+                cv.write("WORKER", "H", f"a{c}[{j}]",
+                         w.sigmoid(cv.read("WORKER", "Z", f"zh{c}[{j}]")),
+                         "activation", SIGMA_Q16)
+        # 1c. canvas-native output pre-activation, from the stored ACTIVATIONS
+        zy = []
+        for c in CASES:
             ay = cv.read("REGISTRAR", "B2", "c") * SCALE
             for j in HID:
-                ay += cv.read("REGISTRAR", "W2", f"v[{j}]") * zh_c[j]
+                ay += cv.read("REGISTRAR", "W2", f"v[{j}]") * \
+                    cv.read("REGISTRAR", "H", f"a{c}[{j}]")
             zy.append(ay >> 16)
+            cv.write("REGISTRAR", "Z", f"zy{c}", zy[-1], "arg", SIGMA_Q16_SHIFT)
+        # 1d. worker: output sigmoid
         for c in CASES:
-            for j in HID:
-                cv.write("REGISTRAR", "Z", f"zh{c}[{j}]", zh[c][j], "arg",
-                         SIGMA_Q16_SHIFT)
-            cv.write("REGISTRAR", "Z", f"zy{c}", zy[c], "arg", SIGMA_Q16_SHIFT)
-        # transient worker: reads Z, writes activations.  No parameter crosses.
-        wreads = [f"Z.zh{c}[{j}]" for c in CASES for j in HID] + \
-                 [f"Z.zy{c}" for c in CASES]
-        wpins = pin(cv, wreads)
-        for c in CASES:
-            for j in HID:
-                cv.write("WORKER", "H", f"a{c}[{j}]", w.sigmoid(zh[c][j]),
-                         "activation", SIGMA_Q16)
-            cv.write("WORKER", "Y", f"y{c}", w.sigmoid(zy[c]), "activation",
-                     SIGMA_Q16)
+            cv.write("WORKER", "Y", f"y{c}",
+                     w.sigmoid(cv.read("WORKER", "Z", f"zy{c}")),
+                     "activation", SIGMA_Q16)
+
+        wreads = ([f"Z.zh{c}[{j}]" for c in CASES for j in HID] +
+                  [f"Z.zy{c}" for c in CASES])
         contract = make_contract(
             op="FORWARD", cycle=cycle, tick=3 * cycle + 1, reader_role="WORKER",
             reads=wreads, writer_role="WORKER",
@@ -507,8 +517,9 @@ class Engine:
             opcodes=["sigmoid"], worker_class=WORKER_CLASS,
             flux={"proof": "mock", "verified": False,
                   "note": "E1 has no critic constraints; UNVERIFIED per SPEC rule 9",
-                  "canvas_native_ops": "affine Q32 accumulate, single Q32->Q16 shift"})
-        return contract, {"in": in_pins, "worker_pins": wpins,
+                  "canvas_native_ops": "affine Q32 accumulate, single Q32->Q16 shift",
+                  "round_trips": 2})
+        return contract, {"in": in_pins, "worker_pins": pin(cv, wreads),
                           "margins": _margins(w, [z for zc in zh for z in zc] + zy)}
 
     # ---- tick phase 2: BACKWARD (ledger-to-ledger from the forward receipt) --

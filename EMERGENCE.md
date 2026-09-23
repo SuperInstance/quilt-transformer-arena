@@ -1,5 +1,12 @@
 # EMERGENCE.md — patterns that don't fit the story (never delete, resolve only with receipts)
 
+## Two-phase doctrine (Casey's bathymetric extension, Round 1.7)
+Once enough boats have tracked the grounds, the GAN'ed contour chart of the bottom becomes so refined the sounder is no longer needed for depth — the model infers depth while trolling. The sounder becomes purely a fish-finder: gain turned UP, not damped.
+- **Phase 1 — SOUNDING** (now): every claim re-run and verified; establish the substrate; damp the noise to read the bottom. Referee verification gain HIGH.
+- **Phase 2 — TROLLING** (earned, not declared): the accumulated contour model (SPEC + synopses + stats history + fish atlas) predicts round behavior accurately enough that full depth-sounds become spot-checks. Referee gain turns UP on anomaly detection: receipt-count anomalies, σ/hash deviations, defect-class novelty. Verification budget is RE-ALLOCATED from confirming the expected to chasing the surprising — never retired: every amplified detection still requires a receipted confirmation run. The sounder proposes; the net (execution) decides.
+- **Promotion criterion (receipted):** the contour model's per-round predictions (test counts, σ ranges, defect classes, termination-relevant trends) measured against actuals for K=5 consecutive rounds ≥ 80% accurate → declare Phase 2 for the dimensions predicted well. Sounding continues for everything the model has NOT proven it can predict. Phase is per-dimension, not global.
+- **False-fish hazard:** amplified gain amplifies noise. Null tracks are chart data — a round that finds nothing is still a track. Every fish claim carries a confirmation receipt or it goes back in the water.
+
 ## Fish atlas (Casey's spinning-disc doctrine, Round 1.6)
 The old sonar operator damped the fish to read the bottom — until fifty years of KEPT echograms taught the shape of fish in the noise, and a little rising-falling secondary ping became readable as a fish from experience. Consequences:
 1. **Never over-damp.** Raw echograms (every round's full artifacts, logs, stats, moth rows) are preserved forever — uncompressed, ungroomed. The "noise" rounds may be the signal.

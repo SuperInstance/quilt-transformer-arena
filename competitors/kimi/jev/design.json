@@ -1,0 +1,9 @@
+{
+ "model": "jev-1.13.0",
+ "prompt": "E1 codec choice: Q16 fixed-point (int64, 16 frac bits) vs raw dyadic export for canvas cells \u2014 which bounds rewind determinism better for a float-numpy worker boundary?",
+ "ts": 1790181738.8533049,
+ "raw": "{\n  \"ok\": false,\n  \"status\": 400,\n  \"body\": {\n    \"detail\": {\n      \"error_type\": \"api_usage_error\",\n      \"message\": \"Invalid request.\"\n    }\n  }\n}",
+ "stderr": "",
+ "rc": 0,
+ "status": "LIVE"
+}

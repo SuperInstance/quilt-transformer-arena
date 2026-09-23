@@ -1,0 +1,9 @@
+{
+ "model": "jev-1.13.0",
+ "prompt": "Ascetic E1 canvas design, score each option 0-100 for minimal-concept fitness and bitwise-rewind verifiability: (1) tick semantics: A cycle = one sequential pass over all 4 XOR rows (8 worker flights) vs B cycle = one row (2 flights, 4x ledger rows). (2) codec: Q16.16 int with floor-mul vs dyadic rationals (num/den pairs).",
+ "ts": 1790181477.1974175,
+ "raw": "{\n  \"ok\": false,\n  \"status\": 400,\n  \"body\": {\n    \"detail\": {\n      \"error_type\": \"api_usage_error\",\n      \"message\": \"Invalid request.\"\n    }\n  }\n}",
+ "stderr": "",
+ "rc": 0,
+ "status": "LIVE"
+}

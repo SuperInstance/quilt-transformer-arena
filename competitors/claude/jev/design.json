@@ -1,0 +1,9 @@
+{
+ "model": "jev-1.13.0",
+ "prompt": "DESIGN CHOICE D1 \u2014 transcendental codec boundary for canvas-native MLP (E1). Canvas stores integers only. The numpy worker must compute sigmoid and sigmoid-prime, then hand results back to the canvas. Candidate A: Q16.16 fixed-point at the boundary (float64 inside worker, quantize to int16-scaled on return; error <=0.5ulp, deterministic, 4 bytes/cell). Candidate B: exact rationals (Fraction) across the boundary (zero quantization error, but worker returns non-int objects, canvas sees non-closed type, 10-50x slower). Candidate C: keep transcendentals as exact integer piecewise-linear lookup (no float anywhere, but activation is a approximation with slope discontinuities and gradient gaps). Score A/B/C for E1 on: bitwise-rewind determinism, codec exactness honesty, XOR trainability, auditability.",
+ "ts": 1790181316.708444,
+ "raw": "{\n  \"ok\": false,\n  \"status\": 400,\n  \"body\": {\n    \"detail\": {\n      \"error_type\": \"api_usage_error\",\n      \"message\": \"Invalid request.\"\n    }\n  }\n}",
+ "stderr": "",
+ "rc": 0,
+ "status": "LIVE"
+}

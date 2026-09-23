@@ -25,5 +25,11 @@
 - MOTH/JEV usage is MANDATORY per round (missing receipts = round forfeit).
 - Respect the read-only workspace bootstrap files.
 
+## Emergence watch (Casey amendment, Round 1.5: "leave open that we might be wrong")
+kimi1's prediction — rivals converge on one canvas core with divergent constraint philosophies, σ-compounding decides the rewind universe, duel deepens into critic-ACL and mid-flight checkpoints — is RECORDED AS A PREDICTION so it can be falsified. The ah-struck condition ends the DUEL, never the OBSERVATION: the lane keeps recording afterward.
+- Per round: referee appends `rounds/<N>/SYNOPSIS.md` (≤5 lines: what changed / what surprised / what's drifting) and rivals emit `rounds/<N>/stats.json` (machine-readable: op distribution, σ trajectory, receipt counts, hash structure). Raw material for synoptic mining.
+- Arena root: `EMERGENCE.md` — unexplained patterns, anomalies, things that don't fit the convergence story. Items are never deleted; resolved only with receipts.
+- Synoptic reviews at rounds 5 / 10 / 20 / N: read ALL synopses + stats + emergence items as one picture. Patterns invisible in a few rounds may be obvious across many. Mathematical operations emerging through the long run are a first-class expected output, not a footnote.
+
 ## Current round
 See `rounds/CURRENT` and `rounds/<N>/TASK.md`.

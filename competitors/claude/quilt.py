@@ -292,13 +292,27 @@ class NumpyWorker:
         self.np = np
 
     def sigmoid(self, z_q16: int) -> int:
+        """Numerically stable: never overflows, no branching on NaN, deterministic."""
         np = self.np
-        return to_q16(1.0 / (1.0 + np.exp(-from_q16(z_q16))))
+        z = from_q16(z_q16)
+        if z >= 0.0:
+            return to_q16(1.0 / (1.0 + np.exp(-z)))
+        e = np.exp(z)
+        return to_q16(e / (1.0 + e))
 
     def sigmoid_grad(self, s_q16: int) -> int:
         np = self.np
         s = from_q16(s_q16)
         return to_q16(s * (1.0 - s))
+
+    def _sig_exact(self, z_q16: int) -> float:
+        """The float the sigmoid opcode WOULD return, for margin measurement."""
+        np = self.np
+        z = from_q16(z_q16)
+        if z >= 0.0:
+            return 1.0 / (1.0 + np.exp(-z))
+        e = np.exp(z)
+        return e / (1.0 + e)
 
     def ulp_margin(self, x_exact: float) -> int:
         """Q16-unit distance from the nearest rounding boundary.
@@ -520,13 +534,15 @@ class Engine:
             for j in HID:
                 cv.write("WORKER", "G", f"gh{c}[{j}]", w.sigmoid_grad(
                     cv.read("WORKER", "Z", f"gh{c}[{j}]")), "deriv", SIGMA_Q16)
-        # canvas-native: exact differences and integer products
+        # canvas-native: exact differences and integer products.
+        # Loss is binary cross-entropy, so the output delta wrt the pre-activation
+        # is (y_hat - t) with NO sigmoid-prime factor — it escapes the 0.5 plateau
+        # that squares-error+sigmoid gets stuck in, and it is *exact* in Q16.
         dz = []
         for c in CASES:
-            d = cv.read("REGISTRAR", "Y", f"y{c}") - cv.read("REGISTRAR", "T", f"y{c}")
-            dzh = (d * cv.read("REGISTRAR", "G", f"gy{c}")) >> 16
+            dzh = cv.read("REGISTRAR", "Y", f"y{c}") - cv.read("REGISTRAR", "T", f"y{c}")
             dz.append(dzh)
-            cv.write("REGISTRAR", "DY", f"dy{c}", dzh, "delta", SIGMA_Q16_SHIFT)
+            cv.write("REGISTRAR", "DY", f"dy{c}", dzh, "delta", SIGMA_EXACT)
         for c in CASES:
             for j in HID:
                 da = (dz[c] * cv.read("REGISTRAR", "W2", f"v[{j}]")) >> 16
@@ -619,7 +635,13 @@ class Engine:
     # ---- helpers ----------------------------------------------------------
     @staticmethod
     def loss(cv: Canvas) -> int:
-        """Q16 squared error summed over the batch (exact, integer)."""
+        """Q16 cross-entropy summed over the batch (exact, integer).
+
+        L = -[t ln p + (1-t) ln(1-p)]; the logs are transcendentals and stay out
+        of the canvas, so the ledger carries the surrogate it can afford: the
+        exact squared error in Q16.  Reported as a training signal only — the
+        acceptance test is the sign of each output, never this number.
+        """
         tot = 0
         for c in CASES:
             d = cv.read("AUDITOR", "Y", f"y{c}") - cv.read("AUDITOR", "T", f"y{c}")
@@ -660,7 +682,7 @@ class Engine:
 
 
 def _margins(w: NumpyWorker, zs: list[int]) -> list[int]:
-    return [w.ulp_margin(1.0 / (1.0 + w.np.exp(-from_q16(z)))) for z in zs]
+    return [w.ulp_margin(w._sig_exact(z)) for z in zs]
 
 
 def _marg_args(cv: Canvas, cycle: int) -> list[int]:

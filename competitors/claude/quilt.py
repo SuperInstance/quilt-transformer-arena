@@ -389,16 +389,22 @@ class Ledger:
             "merkle_root": kev([self.entries[i]["content_hash"] for i in seqs])})
 
     def verify_segments(self) -> list[bool]:
+        """Re-derive each seal's merkle root; segments are immutable spans.
+
+        A segment spans [lo, hi]; the seal entry itself sits at hi+1, and the next
+        segment starts after it — the same convention `seal_segment` uses.
+        """
         ok, lo = [], 0
-        for e in self.entries:
+        for i, e in enumerate(self.entries):
             if e["kind"] != SEGMENT_SEAL:
                 continue
             b = e["body"]
-            ok.append(b["lo"] == lo and b["hi"] == len(self.entries) - 1 and
-                      b["n"] == b["hi"] - b["lo"] + 1 and
-                      b["merkle_root"] == kev([self.entries[i]["content_hash"]
-                                               for i in range(b["lo"], b["hi"] + 1)]))
-            lo = b["hi"] + 1
+            span = range(b["lo"], b["hi"] + 1)
+            ok.append(b["lo"] == lo and
+                      b["n"] == b["hi"] - b["lo"] + 1 and len(span) == b["n"] and
+                      b["merkle_root"] == kev([self.entries[j]["content_hash"]
+                                               for j in span]))
+            lo = i + 1
         return ok
 
     def rewind_prefix(self, cycle: int) -> list[dict]:
@@ -667,7 +673,7 @@ class Engine:
                 counts[c.sigma] += 1
         n = sum(counts.values())
         return {"cycle": cycle, "sigma_counts": counts,
-                "exact_ratio": round(counts[SIGMA_EXACT] / max(1, n), 6),
+                "exact_permille": counts[SIGMA_EXACT] * 1000 // max(1, n),
                 "float_cells": len(cv.float_scan()),
                 "cells": n}
 
@@ -721,26 +727,34 @@ def train(cycles: int, lr_q16: int, seed: str = "registrar/e1/xor/v1"
 
 
 def replay(entries: list[dict], lr_q16: int) -> tuple[Canvas, list[dict]]:
-    """Re-derive a canvas by executing a ledger prefix from nothing."""
+    """Re-derive a canvas by executing a ledger prefix from nothing.
+
+    Returns the canvas plus the FLIGHT receipts the replay produced (GENESIS and
+    seal entries are applied but do not produce a flight receipt).
+    """
     cv = Canvas()
     eng, w = Engine(lr_q16), NumpyWorker()
     bodies = []
     for e in entries:
-        bodies.append(eng.apply(cv, e, w))
+        body = eng.apply(cv, e, w)
+        if e["kind"] == FLIGHT:
+            bodies.append(body)
     return cv, bodies
 
 
 def rewind_and_rerun(led: Ledger, k: int, cycles: int, lr_q16: int
-                     ) -> tuple[Canvas, list[dict]]:
+                     ) -> tuple[Canvas, str, list[dict]]:
     """Bitwise rewind: keep the prefix through k, replay it, then re-run to N.
 
     No state is restored from a snapshot — the canvas is rebuilt by executing the
-    retained prefix from genesis, then the discarded suffix is recomputed.  The
-    caller compares the result against the original, receipt for receipt.
+    retained prefix from genesis, then the discarded suffix is recomputed.
+    Returns (canvas at the rewound/re-run end, state hash of the canvas at cycle k
+    as re-derived by replay alone, and every receipt produced).
     """
     prefix = led.rewind_prefix(k)
     cv_k, bodies_k = replay(prefix, lr_q16)
+    checkpoint = cv_k.state_hash()
     w = NumpyWorker()
     for c in range(k + 1, cycles):
         bodies_k.append(Engine(lr_q16).cycle(cv_k, c, w))
-    return cv_k, bodies_k
+    return cv_k, checkpoint, bodies_k

@@ -1,0 +1,9 @@
+{
+ "model": "jev-1.13.0",
+ "prompt": "A or B: A=Q16.16 fixed point codec, B=exact rational codec. Answer with a score.",
+ "ts": 1790183082.8528855,
+ "raw": "{\n  \"ok\": false,\n  \"status\": 400,\n  \"body\": {\n    \"detail\": {\n      \"error_type\": \"api_usage_error\",\n      \"message\": \"Invalid request.\"\n    }\n  }\n}",
+ "stderr": "",
+ "rc": 0,
+ "status": "LIVE"
+}

@@ -1,0 +1,23 @@
+REFUSAL 0x81568b014cf9b24d per-cell provenance vector <v,tau,sigma>
+REFUSAL 0x4a3ab80d286b5da5 ACL matrix / Pauli-exclusive per-cell write locks
+REFUSAL 0x65f2d0973c6c85e0 nudge cells (additive offset / multiplicative gate / re-LINK)
+REFUSAL 0x35f6025139c9ee8c flux constraint proof field
+REFUSAL 0xee0a37cddbc4c8fe worker capability card {opcodes, sigma-vs-reference, throughput}
+REFUSAL 0x0f728d93c7153f19 multigrid cell store
+REFUSAL 0x2bf8008c37c67eb3 per-flight contract/input/output hash triple
+REFUSAL 0x2fcb54d1e9ea396e ledger-to-ledger autodiff transformation
+REFUSAL 0x7c0505d8931e0791 RNG / seeded initialization
+REFUSAL 0x8cff0d3ad8afea0e ledger segmentation / archival indices
+VERDICT 0xf564fb45ca63551f XOR learned by canvas-native MLP passed=True
+VERDICT 0x4f232de958be3fab bitwise rewind to k + rerun == original states, all cells passed=True
+VERDICT 0x94588b100786b299 ledger integrity: per-cycle kev(state)==post, post[n]==pre[n+1]; tampe passed=True
+VERDICT 0x762f0495ec02bbe1 canvas never holds a float: every cell is python int at every cycle (a passed=True
+VERDICT 0x54115f47723f94d6 numpy is the only worker class and flies one opcode: tanh (np.tanh), 8 passed=True
+FINDING 0xfe9c8c42c2746a95 harness receipts.py:43 comment shows kev self-test value as 
+FINDING 0x372abb49f71b9803 JEV proxy rejects harness.jev_decide() documented payload {m
+
+preds: [{"x": [1, 0], "target": 1, "y_q16": 63757, "abs_err": 0.0271453857421875}, {"x": [0, 1], "target": 1, "y_q16": 63752, "abs_err": 0.0272216796875}, {"x": [1, 1], "target": 0, "y_q16": -18436, "abs_err": 0.28131103515625}, {"x": [0, 0], "target": 0, "y_q16": -10217, "abs_err": 0.1558990478515625}]
+cycles: 3000 min_margin: 0.4728 sigma_max: 7.629e-06
+rewinds: [{"k": 0, "bitwise_equal": true, "rerun_final_hash": "0x14bae40992f440af"}, {"k": 1500, "bitwise_equal": true, "rerun_final_hash": "0x14bae40992f440af"}, {"k": 2995, "bitwise_equal": true, "rerun_final_hash": "0x14bae40992f440af"}]
+integrity clean: True tamper caught: True final: 0x14bae40992f440af
+verdict_hashes: {"XOR learned by canvas-na": "0xf564fb45ca63551f", "bitwise rewind to k + re": "0x4f232de958be3fab", "ledger integrity": "0x94588b100786b299", "canvas never holds a flo": "0x762f0495ec02bbe1", "numpy is the only worker": "0x54115f47723f94d6"}

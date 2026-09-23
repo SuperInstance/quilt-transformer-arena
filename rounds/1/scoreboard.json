@@ -1,0 +1,6 @@
+{"round":1,"rivals":{
+ "kimi":{"verified":2,"findings":1,"defects_caught":3,"self_caught":3,"philosophy":"adversary"},
+ "crush":{"verified":5,"findings":2,"refusals":10,"defects_caught":0,"self_caught":0,"philosophy":"ascetic","defects_received":["MOTH-CWD-CONTAMINATION (HIGH, from claude play-test)"]},
+ "claude":{"verified":13,"findings":5,"refusals":2,"defects_caught":2,"self_caught":3,"philosophy":"registrar","headline":"XOR cycle 57; 6-k bitwise rewind with RECEIPT-LEVEL identity; MARGIN=154 Q16 units (libm-robustness measured, not assumed)"}},
+"referee_defects":[{"id":"HARNESS-JEV-LIVE-MISLABEL","severity":"HIGH","found_by":"claude","fixed":true}],
+"status":"claude/Registrar wins Round 1 on claim depth (13 executable claims incl. self-attack + rival play-tests). Ah-struck meter: 1 round away from registering on claude's artifact — the Adversary's notes on it are actionable, but the Registrar's integrity machinery is the strongest single build seen tonight."}

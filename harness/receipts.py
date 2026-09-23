@@ -33,7 +33,20 @@ def jev_decide(prompt: str, receipt_path: str, model: str = "jev-1.13.0") -> dic
             "-d", json.dumps({"model": model, "prompt": prompt})],
             capture_output=True, text=True, timeout=40)
         receipt["raw"] = out.stdout; receipt["stderr"] = out.stderr; receipt["rc"] = out.returncode
-        receipt["status"] = "LIVE" if out.returncode == 0 and out.stdout.strip() else "UNVERIFIED"
+        # Non-2xx body is NOT a live verdict — the Registrar caught this marking
+        # 400 error pages LIVE (HARNESS-JEV-LIVE-MISLABEL). Parse and gate on the
+        # actual HTTP status before blessing anything.
+        try:
+            parsed = json.loads(out.stdout) if out.stdout.strip() else {}
+        except Exception:
+            parsed = {}
+        http_st = parsed.get("status_code")
+        if http_st is None:
+            import re as _re
+            m = _re.search(r'"status_code"\s*:\s*(\d+)', out.stdout)
+            http_st = int(m.group(1)) if m else 0
+        receipt["status"] = "LIVE" if (out.returncode == 0 and out.stdout.strip()
+                                       and 200 <= int(http_st) < 300) else "UNVERIFIED"
     except Exception as e:
         receipt["raw"] = None; receipt["status"] = "UNVERIFIED"; receipt["error"] = repr(e)
     p = pathlib.Path(receipt_path); p.parent.mkdir(parents=True, exist_ok=True)
